@@ -37,14 +37,13 @@ stds = 1.96 * stds / counts.pow(0.5)
 plt.figure(figsize=(8, 5))
 plt.errorbar(
     means.index, means.values, yerr=stds.values,
-    fmt='o-', capsize=5, label="Média ± incerteza"
+    fmt='o-', capsize=5
 )
 
 # 7) Labels and formatting
 plt.xlabel("Ruído", fontsize=16)
-plt.ylabel("Acurácia", fontsize=16)
+plt.ylabel("Acurácia média", fontsize=16)
 plt.ylim(0.5, 1)
-plt.legend(fontsize=14)
 plt.grid(True)
 plt.tight_layout()
 plt.savefig(OUT_PNG, dpi=300)
