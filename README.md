@@ -1,4 +1,4 @@
-# Título projeto
+# Título do projeto
 
 **Título do Artigo:** Avaliação da Privacidade Diferencial Aplicada ao Aprendizado Federado Através de Ataques de Inversão de Modelo
 
