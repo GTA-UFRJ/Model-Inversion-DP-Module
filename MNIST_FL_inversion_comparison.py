@@ -449,8 +449,10 @@ if __name__ == "__main__":
                 except Exception as e:
                     exception_counter += 1
                     print(f"[Erro] Seed={seed}, NoiseScale={NOISE_SCALEtime100}, Target={i} -> {str(e)}")
+                    # Remove as linhas da seed atual que podem ter sido adicionadas
+                    results_df = results_df[results_df["seed"] != seed]
+                    results_df.to_csv("new_results_with_seed.csv", index=False)
                     continue
-
 
 # Final save
 results_df.to_csv("new_results_with_seed.csv", index=False)

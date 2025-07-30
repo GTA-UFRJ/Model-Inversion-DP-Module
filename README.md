@@ -107,7 +107,7 @@ Opcionalmente, execute o script `clean bad rows.py` para remover sementes que le
 
 ## Reivindicação #1: Ruídos baixos mitigam significativamente os ataques de inversão.
 
-Esta reivindicação é validada pela análise do erro (MSE) das imagens reconstruídas em função do ruído aplicado.
+Esta reivindicação é validada pela análise do índice de similaridade das imagens reconstruídas em relação às imagens do dataset original em função do ruído aplicado.
 
 *   **Comando:** `python organize_results.py`
 *   **Tempo esperado:** Menos de 1 minuto.
