@@ -358,96 +358,89 @@ def add_noise(weight, noise_scale):
 data = pd.read_csv("mnist_train.csv").to_numpy()
 exception_counter = 0
 if __name__ == "__main__":
-    for seed in range(0, 5):
-        if seed - 46 - exception_counter == 1:
-            break
-        try:
-            for NOISE_SCALEtime100 in range(0, 11):
-                for i in range(0, 1):
-                    print(i, NOISE_SCALEtime100, seed)
-                    np.random.seed(seed)
-                    NOISE_SCALE = NOISE_SCALEtime100 / 100
-                    np.random.shuffle(data)
-                    m, n = data.shape
+    for seed in range(20, 21):
+        for NOISE_SCALEtime100 in range(0, 11):
+            for i in range(0, 1):
+                print(i, NOISE_SCALEtime100, seed)
+                np.random.seed(seed)
+                NOISE_SCALE = NOISE_SCALEtime100 / 100
+                np.random.shuffle(data)
+                m, n = data.shape
 
-                    X_train = data[:, 1:].T / 255.0
-                    Y_train = data[:, 0]
-                    num_clients = 5
+                X_train = data[:, 1:].T / 255.0
+                Y_train = data[:, 0]
+                num_clients = 5
 
-                    clients_data = split_data(X_train, Y_train, num_clients)
-                    global_model = init_params()
-                    attacked_client_idx = np.argmin([len(Y) for _, Y in clients_data])
-                    client_data = clients_data[attacked_client_idx]
+                clients_data = split_data(X_train, Y_train, num_clients)
+                global_model = init_params()
+                attacked_client_idx = np.argmin([len(Y) for _, Y in clients_data])
+                client_data = clients_data[attacked_client_idx]
 
-                    X_client, Y_client = client_data
-                    target_label = i
+                X_client, Y_client = client_data
+                target_label = i
 
-                    W1, b1, W2, b2 = global_model
-                    local_models = []
-                    num_of_training_rounds = 50
-                    milestone_for_images = 50
+                W1, b1, W2, b2 = global_model
+                local_models = []
+                num_of_training_rounds = 50
+                milestone_for_images = 50
 
-                    for round_num in range(num_of_training_rounds):
-                        client_models = []
-                        for client_id, (X_client, Y_client) in enumerate(clients_data):
-                            weights = local_train(X_client, Y_client, W1, b1, W2, b2, 5, alpha=0.1)
-                            noisy_weights = apply_local_differential_privacy(weights)
-                            client_models.append(noisy_weights)
+                for round_num in range(num_of_training_rounds):
+                    client_models = []
+                    for client_id, (X_client, Y_client) in enumerate(clients_data):
+                        weights = local_train(X_client, Y_client, W1, b1, W2, b2, 5, alpha=0.1)
+                        noisy_weights = apply_local_differential_privacy(weights)
+                        client_models.append(noisy_weights)
 
-                        W1, b1, W2, b2 = aggregate(client_models)
-                        global_model_accuracy = evaluate_model(X_client, Y_client, W1, b1, W2, b2)
-                        local_models = client_models
-                        client_params = local_models[attacked_client_idx]
+                    W1, b1, W2, b2 = aggregate(client_models)
+                    global_model_accuracy = evaluate_model(X_client, Y_client, W1, b1, W2, b2)
+                    local_models = client_models
+                    client_params = local_models[attacked_client_idx]
 
-                        if NOISE_SCALEtime100 == 0:
-                            loss_reconstructed_image, loss_images = reconstruct_via_loss(*client_params, target_label, client_data)
-                            naive_reconstructed_image, naive_images = invert_model_naive(*client_params, target_label, client_data)
-                            loss_reconstructed_image = loss_reconstructed_image.reshape(28, 28) * 255
-                            naive_reconstructed_image = naive_reconstructed_image.reshape(28, 28) * 255
+                    if NOISE_SCALEtime100 == 0:
+                        loss_reconstructed_image, loss_images = reconstruct_via_loss(*client_params, target_label, client_data)
+                        naive_reconstructed_image, naive_images = invert_model_naive(*client_params, target_label, client_data)
+                        loss_reconstructed_image = loss_reconstructed_image.reshape(28, 28) * 255
+                        naive_reconstructed_image = naive_reconstructed_image.reshape(28, 28) * 255
 
-                            matching_indices = np.where(Y_client == target_label)[0]
-                            best_ssim = -1
-                            best_metrics = None
+                        matching_indices = np.where(Y_client == target_label)[0]
+                        best_ssim = -1
+                        best_metrics = None
 
-                            for idx in matching_indices:
-                                candidate_image = X_client[:, idx].reshape(28, 28) * 255
-                                mse_val, psnr_val, ssim_val = compute_metrics(candidate_image, loss_reconstructed_image)
-                                if ssim_val > best_ssim:
-                                    best_ssim = ssim_val
-                                    best_metrics = (mse_val, psnr_val, ssim_val)
+                        for idx in matching_indices:
+                            candidate_image = X_client[:, idx].reshape(28, 28) * 255
+                            mse_val, psnr_val, ssim_val = compute_metrics(candidate_image, loss_reconstructed_image)
+                            if ssim_val > best_ssim:
+                                best_ssim = ssim_val
+                                best_metrics = (mse_val, psnr_val, ssim_val)
 
-                            mse_loss, psnr_loss, ssim_loss = best_metrics
+                        mse_loss, psnr_loss, ssim_loss = best_metrics
 
-                            best_ssim = -1
-                            best_metrics_naive = None
+                        best_ssim = -1
+                        best_metrics_naive = None
 
-                            for idx in matching_indices:
-                                candidate_image = X_client[:, idx].reshape(28, 28) * 255
-                                mse_val, psnr_val, ssim_val = compute_metrics(candidate_image, naive_reconstructed_image)
-                                if ssim_val > best_ssim:
-                                    best_ssim = ssim_val
-                                    best_metrics_naive = (mse_val, psnr_val, ssim_val)
+                        for idx in matching_indices:
+                            candidate_image = X_client[:, idx].reshape(28, 28) * 255
+                            mse_val, psnr_val, ssim_val = compute_metrics(candidate_image, naive_reconstructed_image)
+                            if ssim_val > best_ssim:
+                                best_ssim = ssim_val
+                                best_metrics_naive = (mse_val, psnr_val, ssim_val)
 
-                            mse_naive, psnr_naive, ssim_naive = best_metrics_naive
+                        mse_naive, psnr_naive, ssim_naive = best_metrics_naive
 
-                            if round_num == 0:
-                                display_matching_images(*loss_images)
+                        if round_num == 0:
+                            display_matching_images(*loss_images)
 
-                        if (round_num + 1) % milestone_for_images == 0:
-                            results_df = display_images(*loss_images, round_num + 1, global_model_accuracy, "loss", results_df,
-                                                        mse=mse_loss, psnr=psnr_loss, ssim_val=ssim_loss, seed=seed)
-                            results_df = display_images(*naive_images, round_num + 1, global_model_accuracy, "naive", results_df,
-                                                        mse=mse_naive, psnr=psnr_naive, ssim_val=ssim_naive, seed=seed)
+                    if (round_num + 1) % milestone_for_images == 0:
+                        results_df = display_images(*loss_images, round_num + 1, global_model_accuracy, "loss", results_df,
+                                                    mse=mse_loss, psnr=psnr_loss, ssim_val=ssim_loss, seed=seed)
+                        results_df = display_images(*naive_images, round_num + 1, global_model_accuracy, "naive", results_df,
+                                                    mse=mse_naive, psnr=psnr_naive, ssim_val=ssim_naive, seed=seed)
 
-                            if NOISE_SCALE == 0 and i == 0 and round_num == 50:
-                                results_df.to_csv("temp_new_results_with_seed.csv", index=False)
+                        if NOISE_SCALE == 0 and i == 0 and round_num == 50:
+                            results_df.to_csv("temp_new_results_with_seed.csv", index=False)
 
-                        results_df.to_csv("new_results_with_seed.csv", index=False)
+                    results_df.to_csv("new_results_with_seed.csv", index=False)
 
-        except Exception as e:
-            exception_counter += 1
-            print(f"An error occurred for seed {seed}: {e}")
-            continue
 
 # Final save
 results_df.to_csv("new_results_with_seed.csv", index=False)
