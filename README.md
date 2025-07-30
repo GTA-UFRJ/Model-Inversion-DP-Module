@@ -122,3 +122,5 @@ Esta reivindicação é validada pela análise da acurácia do modelo global em 
 *   **Resultado esperado:** A geração do gráfico `Acurácia por Ruido.png`. Este gráfico mostra que a acurácia do modelo sofre uma queda pequena e gradual, mantendo-se alta mesmo com níveis de ruído que já são eficazes para mitigar os ataques (conforme a Reivindicação #1).
 
 # LICENSE
+
+Este projeto está licenciado sob a Licença MIT. Consulte o arquivo `LICENSE` para obter mais detalhes.
