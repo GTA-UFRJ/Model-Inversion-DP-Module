@@ -28,7 +28,7 @@ Os selos considerados para este artefato são: **Disponível (SELOD)**, **Funcio
 *   **Hardware:** Um computador padrão com pelo menos 8 GB de RAM e 200 MB de espaço em disco.
 *   **Software:**
     *   Sistema Operacional: Windows, macOS ou Linux.
-    *   Python 3.8 ou superior.
+    *   Python 3.11 ou superior.
 
 # Dependências
 
@@ -36,7 +36,7 @@ As dependências de software e dados necessários para a execução dos experime
 
 ### Bibliotecas Python
 
-As bibliotecas podem ser instaladas via `pip`. As versões exatas usadas no desenvolvimento estão listadas abaixo, mas versões mais recentes provavelmente funcionarão.
+As bibliotecas podem ser instaladas via `pip`. As versões exatas usadas no desenvolvimento estão listadas abaixo, mas versões mais recentes ou até um pouco mais antigas provavelmente funcionarão. Está disponibilizado também um arquivo `requirements.txt` para facilitar a instalação.
 
 *   `numpy==1.26.4`
 *   `pandas==2.2.2`
@@ -71,25 +71,25 @@ Ao final destes passos, o ambiente estará pronto para execução.
 
 # Teste mínimo
 
-Para garantir que o ambiente está configurado corretamente, execute um teste mínimo que roda o experimento para apenas uma classe, um nível de ruído e por 10 rodadas de treinamento.
+Para garantir que o ambiente está configurado corretamente, execute um teste mínimo que roda o experimento para apenas uma classe, um nível de ruído e por 50 rodadas de treinamento.
 
 1.  Abra o script `MNIST_FL_inversion_comparison.py` em um editor de texto.
 2.  No final do arquivo (`if __name__ == "__main__":`), modifique os parâmetros dos laços de repetição conforme o exemplo abaixo:
     ```python
     # Bloco principal para execução
     if __name__ == "__main__":
-        for seed in range(1): # Executa para 1 semente
+    for seed in range(1): # Executa para 1 semente
+        for i in range(1): # Executa para 1 classe
+            ocorreu_erro_neste_i = False # Flag para caso de erros
             for NOISE_SCALEtime100 in range(1): # Executa para 1 nível de ruído
-                for i in range(1): # Executa para 1 classe
-                    # ... (o resto do código permanece o mesmo)
-                    num_of_training_rounds = 10 # Executa por 10 rodadas
+            # ...
     ```
 3.  Execute o script a partir do terminal:
     ```bash
     python MNIST_FL_inversion_comparison.py
     ```
 
-A execução deve levar entre 1 e 2 minutos. Se o script terminar sem erros e gerar o arquivo `new_results_with_seed.csv` e imagens de exemplo na pasta `0/0.0 noise/`, a instalação foi bem-sucedida.
+A execução deve levar até 1 minuto, mas pode demorar mais dependendo das especificações do dispositivo onde a execução está ocorrendo. Se o script terminar sem erros, imprimir a mensagem `acabou` e gerar o arquivo `new_results_with_seed.csv` na raiz do repositório e imagens de exemplo na pasta `0/0.0 noise/`, a instalação foi bem-sucedida.
 
 **Importante:** Lembre-se de reverter as alterações no script antes de executar os experimentos completos.
 
