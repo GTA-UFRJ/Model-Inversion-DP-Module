@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 # --- CONFIG -------------------------------------------------------------
 CSV_PATH = "new_results_with_seed.csv"     # ← change to your file name if different
-OUT_PNG  = "Acurácia por Ruido.png"
+OUT_PNG  = "graficos/Acurácia por Ruido.png"
 # ------------------------------------------------------------------------
 
 # 1) Load the CSV
@@ -23,31 +23,28 @@ subset["Accuracy"] = pd.to_numeric(subset["Accuracy"], errors="coerce")
 # 4) Normalize accuracy to [0, 1]
 subset["Accuracy"] /= 100
 
-from scipy.stats import f_oneway
-import pandas as pd
+# 5) Group by Noise Scale
+grouped = subset.groupby("Noise Scale")["Accuracy"]
+means = grouped.mean()
+stds = grouped.std()
+counts = grouped.count()
+print(counts)
+# Corrigir os desvios padrão para erro padrão da média (±1.96 * std / sqrt(n))
+stds = 1.96 * stds / counts.pow(0.5)
 
-# Supondo que você já tenha o DataFrame original "subset" com colunas:
-# "Noise Scale" e "Accuracy"
 
-# Ordenar os níveis de ruído
-noise_levels = sorted(subset["Noise Scale"].unique())
+# 6) Plot with error bars
+plt.figure(figsize=(8, 5))
+plt.errorbar(
+    means.index, means.values, yerr=stds.values,
+    fmt='o-', capsize=5
+)
 
-# Aplicar ANOVA entre pares adjacentes
-anova_results = []
-
-for i in range(len(noise_levels) - 1):
-    group1 = subset[subset["Noise Scale"] == noise_levels[i]]["Accuracy"]
-    group2 = subset[subset["Noise Scale"] == noise_levels[i+1]]["Accuracy"]
-    
-    f_stat, p_value = f_oneway(group1, group2)
-    
-    anova_results.append({
-        "Noise Scale 1": noise_levels[i],
-        "Noise Scale 2": noise_levels[i+1],
-        "F-statistic": f_stat,
-        "p-value": p_value,
-        "Significant at 0.05": p_value < 0.05
-    })
-
-anova_df = pd.DataFrame(anova_results)
-anova_df
+# 7) Labels and formatting
+plt.xlabel("Ruído", fontsize=16)
+plt.ylabel("Acurácia média", fontsize=16)
+plt.ylim(0.5, 1)
+plt.grid(True)
+plt.tight_layout()
+plt.savefig(OUT_PNG, dpi=300)
+plt.close()

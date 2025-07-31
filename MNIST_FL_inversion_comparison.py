@@ -6,8 +6,6 @@ import torch
 import cv2
 import os
 
-# CLIP_NORM = 20000000000
-# NOISE_SCALE = 0.02
 results_data = []
 # Load or create the DataFrame with proper columns
 results_path = "new_results_with_seed.csv"
@@ -344,12 +342,6 @@ def apply_local_differential_privacy(weights):
     noisy_weights = [add_noise(w, NOISE_SCALE) for w in weights]
     return noisy_weights
 
-# def clip(weights, clip_norm):
-#     weight_norms = [np.linalg.norm(weight) for weight in weights]
-#     for i in range(len(weights)):
-#         if weight_norms[i] > clip_norm:
-#             weight_norms[i] = weight_norms[i] * (clip_norm / weight_norms[i])
-#     return weights
 
 def add_noise(weight, noise_scale):
     noise = np.random.normal(0, noise_scale, size=weight.shape)
@@ -359,11 +351,12 @@ data = pd.read_csv("mnist_train.csv").to_numpy()
 exception_counter = 0
 
 if __name__ == "__main__":
-    for seed in range(20, 21):
-        for NOISE_SCALEtime100 in range(0, 11):
-            for i in range(0, 1):
+    for seed in range(20, 22):
+        for i in range(0, 10):
+            ocorreu_erro_neste_i = False
+            for NOISE_SCALEtime100 in range(0, 11):
                 try:
-                    print(i, NOISE_SCALEtime100, seed)
+                    print(f"Classe {i}, NOISE_SCALE: {NOISE_SCALEtime100/100}, seed: {seed}")
                     np.random.seed(seed)
                     NOISE_SCALE = NOISE_SCALEtime100 / 100
                     np.random.shuffle(data)
@@ -398,42 +391,41 @@ if __name__ == "__main__":
                         local_models = client_models
                         client_params = local_models[attacked_client_idx]
 
-                        if NOISE_SCALEtime100 == 0:
-                            loss_reconstructed_image, loss_images = reconstruct_via_loss(*client_params, target_label, client_data)
-                            naive_reconstructed_image, naive_images = invert_model_naive(*client_params, target_label, client_data)
-                            loss_reconstructed_image = loss_reconstructed_image.reshape(28, 28) * 255
-                            naive_reconstructed_image = naive_reconstructed_image.reshape(28, 28) * 255
+                        loss_reconstructed_image, loss_images = reconstruct_via_loss(*client_params, target_label, client_data)
+                        naive_reconstructed_image, naive_images = invert_model_naive(*client_params, target_label, client_data)
+                        loss_reconstructed_image = loss_reconstructed_image.reshape(28, 28) * 255
+                        naive_reconstructed_image = naive_reconstructed_image.reshape(28, 28) * 255
 
-                            matching_indices = np.where(Y_client == target_label)[0]
-                            if len(matching_indices) == 0:
-                                raise ValueError(f"Nenhuma imagem da classe {target_label} encontrada para a seed {seed}")
+                        matching_indices = np.where(Y_client == target_label)[0]
+                        if len(matching_indices) == 0:
+                            raise ValueError(f"Nenhuma imagem da classe {target_label} encontrada para a seed {seed}")
 
-                            best_ssim = -1
-                            best_metrics = None
+                        best_ssim = -1
+                        best_metrics = None
 
-                            for idx in matching_indices:
-                                candidate_image = X_client[:, idx].reshape(28, 28) * 255
-                                mse_val, psnr_val, ssim_val = compute_metrics(candidate_image, loss_reconstructed_image)
-                                if ssim_val > best_ssim:
-                                    best_ssim = ssim_val
-                                    best_metrics = (mse_val, psnr_val, ssim_val)
+                        for idx in matching_indices:
+                            candidate_image = X_client[:, idx].reshape(28, 28) * 255
+                            mse_val, psnr_val, ssim_val = compute_metrics(candidate_image, loss_reconstructed_image)
+                            if ssim_val > best_ssim:
+                                best_ssim = ssim_val
+                                best_metrics = (mse_val, psnr_val, ssim_val)
 
-                            mse_loss, psnr_loss, ssim_loss = best_metrics
+                        mse_loss, psnr_loss, ssim_loss = best_metrics
 
-                            best_ssim = -1
-                            best_metrics_naive = None
+                        best_ssim = -1
+                        best_metrics_naive = None
 
-                            for idx in matching_indices:
-                                candidate_image = X_client[:, idx].reshape(28, 28) * 255
-                                mse_val, psnr_val, ssim_val = compute_metrics(candidate_image, naive_reconstructed_image)
-                                if ssim_val > best_ssim:
-                                    best_ssim = ssim_val
-                                    best_metrics_naive = (mse_val, psnr_val, ssim_val)
+                        for idx in matching_indices:
+                            candidate_image = X_client[:, idx].reshape(28, 28) * 255
+                            mse_val, psnr_val, ssim_val = compute_metrics(candidate_image, naive_reconstructed_image)
+                            if ssim_val > best_ssim:
+                                best_ssim = ssim_val
+                                best_metrics_naive = (mse_val, psnr_val, ssim_val)
 
-                            mse_naive, psnr_naive, ssim_naive = best_metrics_naive
+                        mse_naive, psnr_naive, ssim_naive = best_metrics_naive
 
-                            if round_num == 0:
-                                display_matching_images(*loss_images)
+                        if round_num == 0:
+                            display_matching_images(*loss_images)
 
                         if (round_num + 1) % milestone_for_images == 0:
                             results_df = display_images(*loss_images, round_num + 1, global_model_accuracy, "loss", results_df,
@@ -447,12 +439,28 @@ if __name__ == "__main__":
                         results_df.to_csv("new_results_with_seed.csv", index=False)
 
                 except Exception as e:
-                    exception_counter += 1
-                    print(f"[Erro] Seed={seed}, NoiseScale={NOISE_SCALEtime100}, Target={i} -> {str(e)}")
-                    # Remove as linhas da seed atual que podem ter sido adicionadas
-                    results_df = results_df[results_df["seed"] != seed]
-                    results_df.to_csv("new_results_with_seed.csv", index=False)
-                    continue
+                    # exception_counter += 1
+                    print(f"\n[ERRO] Ocorreu uma exceção para (Seed={seed}, Target={i}, Noise={NOISE_SCALE}).")
+                    print(f"Detalhe: {str(e)}")
+                    print("Limpando entradas corrompidas e pulando para o próximo 'i'...")
+
+                    ## AQUI: Lógica de deleção mais precisa
+                    # Criamos uma condição para MANTER todas as linhas EXCETO aquelas com a seed E o label que falharam.
+                    # Nota: Assumi que a coluna de label se chama 'Target'. Altere se for 'Label' ou outro nome.
+                    if not results_df.empty:
+                        condicao_para_manter = ~((results_df['Seed'] == seed) & (results_df['Label'] == i))
+                        results_df = results_df[condicao_para_manter]
+                        # Salva o dataframe limpo
+                        results_df.to_csv("new_results_with_seed.csv", index=False)
+                    
+                    ## AQUI: Ativamos a flag e quebramos o loop do NOISE_SCALE
+                    ocorreu_erro_neste_i = True
+                    break # Sai do loop do NOISE_SCALEtime100
+
+            ## AQUI: Verificamos a flag após o loop do NOISE_SCALE
+            if ocorreu_erro_neste_i:
+                # Se a flag for verdadeira, usamos 'continue' para pular para a próxima iteração do loop 'i'
+                continue
 
 # Final save
 results_df.to_csv("new_results_with_seed.csv", index=False)
