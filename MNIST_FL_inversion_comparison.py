@@ -446,7 +446,6 @@ if __name__ == "__main__":
 
                     ## AQUI: Lógica de deleção mais precisa
                     # Criamos uma condição para MANTER todas as linhas EXCETO aquelas com a seed E o label que falharam.
-                    # Nota: Assumi que a coluna de label se chama 'Target'. Altere se for 'Label' ou outro nome.
                     if not results_df.empty:
                         condicao_para_manter = ~((results_df['Seed'] == seed) & (results_df['Label'] == i))
                         results_df = results_df[condicao_para_manter]
