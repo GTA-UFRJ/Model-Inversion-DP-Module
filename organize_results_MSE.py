@@ -26,7 +26,7 @@ def plot_MSE(data, method, title, filename):
     plt.close()
 
 # Plot and save for each requested condition
-plot_MSE(df, method='loss', title='MSE for Min Client - Loss Attack at Round 50', filename='MSE_por_classe.png')
+plot_MSE(df, method='loss', title='MSE for Min Client - Loss Attack at Round 50', filename='graficos/MSE_por_classe.png')
 
 
 def plot_MSE_over_Noise_Scales(data, filename):
@@ -64,4 +64,4 @@ def plot_MSE_over_Noise_Scales(data, filename):
     plt.savefig(filename, bbox_inches='tight')
     plt.close()
 
-plot_MSE_over_Noise_Scales(df, filename='MSE_por_ruido_médio.png')
+plot_MSE_over_Noise_Scales(df, filename='graficos/MSE_por_ruido_médio.png')

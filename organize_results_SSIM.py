@@ -26,7 +26,7 @@ def plot_SSIM(data, method, title, filename):
     plt.close()
 
 # Plot and save for each requested condition
-plot_SSIM(df, method='loss', title='SSIM for Min Client - Loss Attack at Round 50', filename='SSIM_por_classe.png')
+plot_SSIM(df, method='loss', title='SSIM for Min Client - Loss Attack at Round 50', filename='graficos/SSIM_por_classe.png')
 
 
 def plot_SSIM_over_Noise_Scales(data, filename):
@@ -64,5 +64,5 @@ def plot_SSIM_over_Noise_Scales(data, filename):
     plt.savefig(filename, bbox_inches='tight')
     plt.close()
 
-plot_SSIM_over_Noise_Scales(df, filename='SSIM_por_ruido_médio.png')
+plot_SSIM_over_Noise_Scales(df, filename='graficos/SSIM_por_ruido_médio.png')
 

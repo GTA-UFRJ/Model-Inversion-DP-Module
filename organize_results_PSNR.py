@@ -26,7 +26,7 @@ def plot_PSNR(data, method, title, filename):
     plt.close()
 
 # Plot and save for each requested condition
-plot_PSNR(df, method='loss', title='PSNR for Min Client - Loss Attack at Round 50', filename='PSNR_por_classe.png')
+plot_PSNR(df, method='loss', title='PSNR for Min Client - Loss Attack at Round 50', filename='graficos/PSNR_por_classe.png')
 
 
 def plot_PSNR_over_Noise_Scales(data, filename):
@@ -64,4 +64,4 @@ def plot_PSNR_over_Noise_Scales(data, filename):
     plt.savefig(filename, bbox_inches='tight')
     plt.close()
 
-plot_PSNR_over_Noise_Scales(df, filename='PSNR_por_ruido_médio.png')
+plot_PSNR_over_Noise_Scales(df, filename='graficos/PSNR_por_ruido_médio.png')

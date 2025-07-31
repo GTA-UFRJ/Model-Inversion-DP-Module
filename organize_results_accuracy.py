@@ -10,6 +10,7 @@ OUT_PNG  = "graficos/Acurácia por Ruido.png"
 df = pd.read_csv(CSV_PATH)
 
 # 2) Filter relevant rows
+# Fixando a Label, o Round e o Método para consistência
 mask = (df["Label"] == 0) & \
        (df["Round"] == 50) & \
        (df["Method"] == "loss") & \
