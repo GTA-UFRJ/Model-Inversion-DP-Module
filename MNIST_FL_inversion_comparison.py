@@ -6,8 +6,10 @@ import torch
 import cv2
 import os
 
+# Lista para armazenar resultados intermediários (não usada diretamente aqui)
 results_data = []
-# Load or create the DataFrame with proper columns
+
+# Carrega um DataFrame existente com resultados ou cria um novo com as colunas apropriadas
 results_path = "new_results_with_seed.csv"
 if os.path.exists(results_path):
     results_df = pd.read_csv(results_path)
@@ -17,6 +19,7 @@ else:
         'Accuracy', 'Loss', 'MSE', 'PSNR', 'SSIM', 'Seed'
     ])
 
+# Funções de ativação e suas derivadas
 def ReLU(Z):
     return np.maximum(0, Z)
 
@@ -27,12 +30,13 @@ def softmax(Z):
     expZ = np.exp(Z - np.max(Z, axis=0, keepdims=True)) 
     return expZ / expZ.sum(axis=0, keepdims=True)
 
-
+# Codifica os rótulos em one-hot encoding
 def one_hot(Y):
     one_hot_Y = np.zeros((Y.size, Y.max() + 1))
     one_hot_Y[np.arange(Y.size), Y.astype(int)] = 1
     return one_hot_Y.T
 
+# Propagação direta (forward) de uma MLP de 1 camada escondida
 def forward_prop(W1, b1, W2, b2, X):
     Z1 = W1.dot(X) + b1
     A1 = ReLU(Z1)
@@ -40,6 +44,7 @@ def forward_prop(W1, b1, W2, b2, X):
     A2 = softmax(Z2)
     return Z1, A1, Z2, A2
 
+# Retropropagação (cálculo dos gradientes)
 def back_prop(Z1, A1, Z2, A2, W2, X, Y):
     m = Y.size
     one_hot_Y = one_hot(Y)
@@ -54,6 +59,7 @@ def back_prop(Z1, A1, Z2, A2, W2, X, Y):
 
     return dW1, db1, dW2, db2
 
+# Atualiza os parâmetros com gradiente descendente
 def update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, alpha):
     W1 = W1 - alpha * dW1
     b1 = b1 - alpha * db1
@@ -61,6 +67,7 @@ def update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, alpha):
     b2 = b2 - alpha * db2
     return W1, b1, W2, b2
 
+# Divide o dataset entre os clientes
 def split_data(X, Y, num_clients, samples_per_client=50):
     clients = []
     for _ in range(num_clients):
@@ -70,6 +77,7 @@ def split_data(X, Y, num_clients, samples_per_client=50):
         clients.append((X_client, Y_client))
     return clients
 
+# Inicializa pesos e bias com valores pequenos aleatórios
 def init_params():
     W1 = np.random.randn(10, 784) * 0.01 
     b1 = np.zeros((10, 1))                
@@ -77,6 +85,7 @@ def init_params():
     b2 = np.zeros((10, 1))                
     return W1, b1, W2, b2
 
+# Treinamento local em um cliente
 def local_train(X, Y, W1, b1, W2, b2, iterations, alpha):
     for i in range(iterations):
         Z1, A1, Z2, A2 = forward_prop(W1, b1, W2, b2, X)
@@ -84,18 +93,20 @@ def local_train(X, Y, W1, b1, W2, b2, iterations, alpha):
         W1, b1, W2, b2 = update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, alpha)
     return W1, b1, W2, b2
 
+# Agrega os modelos dos clientes (média dos pesos)
 def aggregate(models):
     num_clients = len(models)
     aggregated = [np.mean([model[param] for model in models], axis=0) for param in range(len(models[0]))]
     return tuple(aggregated)
 
+# Avalia acurácia do modelo em dados
 def evaluate_model(X, Y, W1, b1, W2, b2):
     _, _, _, A2 = forward_prop(W1, b1, W2, b2, X)
     predictions = np.argmax(A2, axis=0)
     accuracy = np.mean(predictions == Y) * 100
     return accuracy
 
-# Not used --- Implemented in main
+# Não usado - Implementado na main
 def federated_learning(clients_data, global_model, num_rounds, local_epochs, alpha):
     W1, b1, W2, b2 = global_model
     local_models = []
@@ -114,6 +125,7 @@ def federated_learning(clients_data, global_model, num_rounds, local_epochs, alp
     
     return W1, b1, W2, b2, local_models 
 
+# Pré-processamento de imagem para LPIPS
 def preprocess_lpips(image):
     image = cv2.resize(image, (64, 64)) 
     image = np.stack([image] * 3, axis=-1) 
@@ -121,6 +133,7 @@ def preprocess_lpips(image):
     image = torch.tensor(image).float().permute(2, 0, 1).unsqueeze(0)
     return image
 
+# Computa MSE, PSNR e SSIM entre imagem original e reconstruída
 def compute_metrics(real_image, reconstructed_image):
     mse = np.mean((real_image - reconstructed_image) ** 2)
     psnr = 20 * np.log10(255.0 / np.sqrt(mse)) if mse > 0 else float('inf')
@@ -130,12 +143,14 @@ def compute_metrics(real_image, reconstructed_image):
 
     return mse, psnr, ssim_value
 
+# Gera uma perturbação localizada para imagem
 def localized_perturbation(X_sample, perturbation_size=50, sigma=0.05):
     perturbation = np.zeros_like(X_sample)
     active_pixels = np.random.choice(784, perturbation_size, replace=False) 
     perturbation[active_pixels] = np.random.normal(0, sigma, size=(perturbation_size, 1))
     return perturbation
 
+# Salva as imagens reconstruídas por rodada e atualiza o CSV de resultados
 def display_images(images, losses, matching_images, labels, iterations, round_num,
                    global_model_accuracy, method, results_df,
                    mse=None, psnr=None, ssim_val=None, seed=None):
@@ -165,13 +180,11 @@ def display_images(images, losses, matching_images, labels, iterations, round_nu
         'SSIM': ssim_val,
         'Seed': seed
     }
-
-    # If a DataFrame was passed, append to it
     
     results_df = pd.concat([results_df, pd.DataFrame([new_row])], ignore_index=True)
     return results_df
 
-
+# Mostra imagens reais da classe-alvo presentes no cliente
 def display_matching_images(images, losses, matching_images, labels, iterations):
     fig, axes = plt.subplots(1,len(matching_images), figsize=(15, 5))
     if len(matching_images) > 1:
@@ -189,6 +202,7 @@ def display_matching_images(images, losses, matching_images, labels, iterations)
     plt.savefig(filename, bbox_inches='tight')
     plt.close(fig)
 
+# Reconstrução ingênua
 def invert_model_naive(W1, b1, W2, b2, target_label, client_data,target_certainty=0.999, max_iterations=3000, milestone=500):
     X_sample = np.zeros((784, 1))
 
@@ -247,6 +261,7 @@ def invert_model_naive(W1, b1, W2, b2, target_label, client_data,target_certaint
 
     return X_sample, (milestone_images, milestone_certainties, matching_images[:10], [target_label] * len(milestone_images), milestone_iterations)
 
+# Reconstrução por gradientes
 def reconstruct_via_loss(W1, b1, W2, b2, target_label, client_data, learning_rate=0.01, iterations=3000, momentum=0.9):
     #print(f"\nAttempting reconstruction for label: {target_label}")
 
@@ -297,6 +312,7 @@ def reconstruct_via_loss(W1, b1, W2, b2, target_label, client_data, learning_rat
 
     return X_reconstructed, (milestone_images, milestone_losses, matching_images[:10], [target_label] * len(milestone_images), milestone_iterations)
 
+# Calcula o mapa de saliência (gradiente da entrada em relação à saída predita)
 def compute_saliency_map(W1, b1, W2, b2, X_input):
     """
     Compute and display the saliency map for a given input image.
@@ -335,6 +351,7 @@ def compute_saliency_map(W1, b1, W2, b2, X_input):
 
     plt.show()
 
+# Aplica ruído gaussiano aos pesos para privacidade diferencial local (LDP)
 def apply_local_differential_privacy(weights):
     """Apply LDP with fixed clipping and additive noise."""
     # clipped_weights = clip(weights, CLIP_NORM)
@@ -342,15 +359,18 @@ def apply_local_differential_privacy(weights):
     noisy_weights = [add_noise(w, NOISE_SCALE) for w in weights]
     return noisy_weights
 
-
+# Adiciona ruído gaussiano aos pesos
 def add_noise(weight, noise_scale):
     noise = np.random.normal(0, noise_scale, size=weight.shape)
     return weight + noise
 
+# Carrega os dados do MNIST do CSV
 data = pd.read_csv("mnist_train.csv").to_numpy()
 exception_counter = 0
 
+# Início
 if __name__ == "__main__":
+    # Itera sobre seeds, classes e níveis de ruído
     for seed in range(20, 22):
         for i in range(0, 10):
             ocorreu_erro_neste_i = False
@@ -461,6 +481,6 @@ if __name__ == "__main__":
                 # Se a flag for verdadeira, usamos 'continue' para pular para a próxima iteração do loop 'i'
                 continue
 
-# Final save
+# Save final
 results_df.to_csv("new_results_with_seed.csv", index=False)
 print("acabou")
