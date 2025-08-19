@@ -131,7 +131,7 @@ O script `run_all_tests.py` orquestra a execução do experimento principal e de
     # Para Windows (PowerShell)
     docker run --rm -it -v "${PWD}:/app" fl-privacy-eval python run_all_tests.py
     ```
-*   **Tempo esperado de execução:** Aproximadamente **45 a 60 horas** (dependendo da configuração de seeds; o padrão do script é 30 seeds).
+*   **Tempo esperado de execução:** Aproximadamente **15 a 30 horas** (dependendo da configuração de seeds; o padrão do script é 30 seeds).
 
 ### Opção B: Execução Manual Passo a Passo
 
@@ -150,7 +150,7 @@ Execute o script principal com parâmetros para gerar todos os dados brutos. Par
     # Para macOS/Linux
     docker run --rm -it -v "$(pwd):/app" fl-privacy-eval python MNIST_FL_inversion_comparison.py --number_of_seeds 30 --classes "0,1,2,3,4,5,6,7,8,9" --noise_scales "0.0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1"
     ```
-*   **Tempo esperado:** ~45-60 horas.
+*   **Tempo esperado:** ~15-30 horas.
 *   **Resultado esperado:** Geração do arquivo `new_results_with_seed.csv` e pastas com as imagens reconstruídas.
 
 > **Nota sobre Tratamento de Erros:**
